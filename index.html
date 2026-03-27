@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ritz Carlton BH — Pool #1004 Procurement Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1c2b4a;--gold:#c09a5a;--sage:#2d7d46;--red:#c0392b;
+  --bg:#f5f6f8;--card:#fff;--border:#e5e7eb;--text:#1a1a1a;--text2:#6b7280;
+}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);font-size:13px;color:var(--text)}
+
+/* Header */
+.header{background:var(--navy);color:#fff;padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.header-title{font-size:1rem;font-weight:700}
+.header-sub{font-size:.75rem;opacity:.65;margin-top:.1rem}
+.header-right{text-align:right;font-size:.75rem;opacity:.75}
+.header-right strong{display:block;font-size:.85rem;color:var(--gold)}
+
+/* Tabs */
+.tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;padding:0 1.5rem;position:sticky;top:0;z-index:50}
+.tab{padding:.6rem 1rem;font-size:.8rem;font-weight:600;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;color:var(--text2);white-space:nowrap}
+.tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+
+/* Panel */
+.panel{display:none;padding:1rem 1.5rem 4rem}
+.panel.active{display:block}
+
+/* Summary cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:.65rem;margin-bottom:1rem}
+.card{background:#fff;border-radius:8px;padding:.8rem 1rem;border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:.25rem}
+.card-value{font-size:1.1rem;font-weight:700;color:var(--navy)}
+.card-value.gold{color:var(--gold)}
+.card-value.green{color:var(--sage)}
+.card-value.red{color:var(--red)}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;background:#fff;border-radius:8px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead tr{background:var(--navy);color:#fff;position:sticky;top:38px;z-index:10}
+thead th{padding:.55rem .7rem;text-align:left;font-weight:600;white-space:nowrap;font-size:.7rem;letter-spacing:.03em}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid #f3f4f6}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fafafa}
+tbody tr.vh{background:#f0f4f8}
+tbody tr.vh td{color:var(--navy);font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;padding:.4rem .7rem}
+tbody td{padding:.45rem .7rem;vertical-align:middle}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr.sub{background:#eef2f7}
+tbody tr.sub td{font-weight:700;color:var(--navy);font-size:.74rem;border-top:1.5px solid #c5d0e0}
+tbody tr.grand{background:var(--navy);color:#fff}
+tbody tr.grand td{font-weight:700}
+
+/* Badges */
+.badge{display:inline-block;padding:.12rem .45rem;border-radius:4px;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.b-pending{background:#fff3cd;color:#7a5800}
+.b-paid{background:#d1e7dd;color:#0a5e2a}
+.b-partial{background:#cfe2ff;color:#084298}
+.b-noship{background:#f3f4f6;color:#9ca3af}
+.b-y{background:#d1e7dd;color:#0a5e2a}
+.b-n{background:#fff3cd;color:#7a5800}
+
+/* Section titles */
+.sec{font-size:.76rem;font-weight:700;color:var(--navy);margin:1.1rem 0 .45rem;text-transform:uppercase;letter-spacing:.07em}
+
+/* Banner */
+.banner{background:#fffbeb;border:1px solid #f0c040;border-radius:6px;padding:.55rem 1rem;margin-bottom:.75rem;font-size:.76rem;color:#7a5800;line-height:1.55}
+
+/* Budget vs actual colors */
+.over{color:var(--red);font-weight:600}
+.under{color:var(--sage);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Higney International · Ritz Carlton Bal Harbour</div>
+    <div class="header-sub">Pool #1004 · 10295 Collins Ave, Bal Harbour FL 33154 · Internal Use Only</div>
+  </div>
+  <div class="header-right">
+    <strong id="updateDate"></strong>
+    Edit <code>data.js</code> → push to GitHub → auto-deploys
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="sw('tracker',this)">📋 Procurement Tracker</div>
+  <div class="tab" onclick="sw('budget',this)">📊 Budget vs. Actual</div>
+  <div class="tab" onclick="sw('commission',this)">💰 Commission Log</div>
+  <div class="tab" onclick="sw('summary',this)">📑 Project Summary</div>
+</div>
+
+<div class="panel active" id="tab-tracker">
+  <div class="cards" id="cards-tracker"></div>
+  <div class="banner">
+    ⚠️ <strong>Blondie's Treehouse:</strong> Shipping not applied (cost inclusive). Commission still earned on unit cost. &nbsp;|&nbsp;
+    <strong>Items marked $0:</strong> Existing on property — no cost, no shipping, no commission. &nbsp;|&nbsp;
+    <strong>TBD section:</strong> Vendor not yet assigned.
+  </div>
+  <div class="tbl-wrap"><table id="t-tracker">
+    <thead><tr>
+      <th>Vendor</th><th>Code</th><th>Description</th>
+      <th class="r">Qty</th><th>Unit</th>
+      <th class="r">Unit Cost</th><th class="r">Ext. Cost</th>
+      <th class="r">Shipping</th><th class="r">Total to Vendor</th>
+      <th class="r">HI Comm (10%)</th>
+      <th>Comm Paid?</th>
+      <th class="r">Paid to Date</th>
+      <th class="r">Balance Due</th>
+      <th>Status</th><th>Notes</th>
+    </tr></thead>
+    <tbody id="tb-tracker"></tbody>
+  </table></div>
+</div>
+
+<div class="panel" id="tab-budget">
+  <div class="cards" id="cards-budget"></div>
+  <div class="sec">Budget vs. Actual by Vendor</div>
+  <div class="tbl-wrap"><table id="t-budget">
+    <thead><tr>
+      <th>Vendor</th>
+      <th class="r">Budget (Ext. Cost)</th>
+      <th class="r">Budgeted Shipping</th>
+      <th class="r">Budget Total</th>
+      <th class="r">Paid to Date</th>
+      <th class="r">Variance</th>
+      <th class="r">% Used</th>
+      <th class="r">Comm. Budget</th>
+    </tr></thead>
+    <tbody id="tb-budget"></tbody>
+  </table></div>
+</div>
+
+<div class="panel" id="tab-commission">
+  <div class="cards" id="cards-comm"></div>
+  <div class="sec">Commission by Vendor — Monthly Tracking</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Vendor</th>
+      <th class="r">Ext. Cost (Basis)</th>
+      <th class="r">Commission Earned (10%)</th>
+      <th>Transferred to Operating?</th>
+      <th class="r">Remaining to Transfer</th>
+      <th>Notes</th>
+    </tr></thead>
+    <tbody id="tb-comm"></tbody>
+  </table></div>
+  <div class="banner" style="margin-top:.75rem">
+    📝 <strong>Monthly process:</strong> Calculate total payments made that month (excl. shipping) × 10% → Dr. Client Funds Held / Cr. Procurement Commission → transfer from Ritz Trust Account to HI Operating. Mark commission as "Paid" in <code>data.js</code> per vendor.
+  </div>
+</div>
+
+<div class="panel" id="tab-summary">
+  <div class="sec">Project Summary — Matches Internal Budget</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Line Item</th><th class="r">Budgeted</th><th class="r">Actual / Notes</th></tr></thead>
+    <tbody id="tb-summary"></tbody>
+  </table></div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const R = PROJECT_FIXED;
+const D = BUDGET_DATA;
+
+function f(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+function pct(a,b){return b===0?'—':(a/b*100).toFixed(1)+'%'}
+function sw(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+document.getElementById('updateDate').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+// ── HELPERS ──
+function calcRow(r){
+  const ext=r.qty*r.unitCost;
+  const ship=r.noShip||r.unitCost===0?0:ext*R.shipping_rate;
+  const total=ext+ship;
+  const comm=r.unitCost===0?0:ext*R.commission_rate;
+  const balance=total-r.paid;
+  return {ext,ship,total,comm,balance};
+}
+
+function vendorGroups(){
+  const m=new Map();
+  D.forEach(r=>{
+    if(!m.has(r.vendor))m.set(r.vendor,[]);
+    m.get(r.vendor).push(r);
+  });
+  return m;
+}
+
+// ── TRACKER TAB ──
+function buildTracker(){
+  const body=document.getElementById('tb-tracker');
+  const vg=vendorGroups();
+  let totExt=0,totShip=0,totTotal=0,totComm=0,totPaid=0;
+
+  vg.forEach((rows,vendor)=>{
+    // vendor header
+    const h=document.createElement('tr');
+    h.className='vh';
+    h.innerHTML=`<td colspan="15">${vendor}</td>`;
+    body.appendChild(h);
+
+    let vExt=0,vShip=0,vTotal=0,vComm=0,vPaid=0;
+    rows.forEach(r=>{
+      const {ext,ship,total,comm,balance}=calcRow(r);
+      vExt+=ext;vShip+=ship;vTotal+=total;vComm+=comm;vPaid+=r.paid;
+      const status=r.unitCost===0?'n/a':r.paid===0?'pending':(r.paid>=total?'paid':'partial');
+      const statusBadge=status==='n/a'?'<span class="badge b-noship">N/A</span>':
+        status==='paid'?'<span class="badge b-paid">Paid</span>':
+        status==='partial'?'<span class="badge b-partial">Partial</span>':
+        '<span class="badge b-pending">Pending</span>';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td style="color:#9ca3af;font-size:.7rem">${r.vendor}</td>
+        <td style="font-weight:600;color:var(--navy)">${r.code}</td>
+        <td>${r.desc}</td>
+        <td class="r">${r.qty}</td><td>${r.unit}</td>
+        <td class="r">${r.unitCost===0?'—':f(r.unitCost)}</td>
+        <td class="r">${ext===0?'—':f(ext)}</td>
+        <td class="r">${r.noShip?'<span class="badge b-noship">Incl.</span>':ext===0?'—':f(ship)}</td>
+        <td class="r" style="font-weight:600">${total===0?'—':f(total)}</td>
+        <td class="r" style="color:var(--gold);font-weight:600">${comm===0?'—':f(comm)}</td>
+        <td><span class="badge ${r.commPaid?'b-y':'b-n'}">${r.commPaid?'Yes':'No'}</span></td>
+        <td class="r">${f(r.paid)}</td>
+        <td class="r" style="color:${balance>0?'var(--red)':'var(--sage)'};font-weight:600">${f(balance)}</td>
+        <td>${statusBadge}</td>
+        <td style="font-size:.7rem;color:var(--text2);max-width:160px">${r.notes}</td>`;
+      body.appendChild(tr);
+      totExt+=ext;totShip+=ship;totTotal+=total;totComm+=comm;totPaid+=r.paid;
+    });
+
+    // vendor subtotal
+    const sub=document.createElement('tr');
+    sub.className='sub';
+    sub.innerHTML=`
+      <td colspan="6" style="text-align:right;font-size:.7rem">SUBTOTAL — ${vendor}</td>
+      <td class="r">${f(vExt)}</td><td class="r">${f(vShip)}</td>
+      <td class="r">${f(vTotal)}</td><td class="r" style="color:var(--gold)">${f(vComm)}</td>
+      <td></td><td class="r">${f(vPaid)}</td>
+      <td class="r">${f(vTotal-vPaid)}</td><td colspan="2"></td>`;
+    body.appendChild(sub);
+  });
+
+  // grand total
+  const g=document.createElement('tr');
+  g.className='grand';
+  g.innerHTML=`
+    <td colspan="6">GRAND TOTAL — ALL VENDORS</td>
+    <td class="r">${f(totExt)}</td><td class="r">${f(totShip)}</td>
+    <td class="r">${f(totTotal)}</td>
+    <td class="r" style="color:var(--gold)">${f(totComm)}</td>
+    <td></td><td class="r">${f(totPaid)}</td>
+    <td class="r">${f(totTotal-totPaid)}</td><td colspan="2"></td>`;
+  body.appendChild(g);
+
+  // cards
+  document.getElementById('cards-tracker').innerHTML=`
+    <div class="card"><div class="card-label">Vendors</div><div class="card-value">${vendorGroups().size}</div></div>
+    <div class="card"><div class="card-label">Line Items</div><div class="card-value">${D.length}</div></div>
+    <div class="card"><div class="card-label">Ext. Cost (Budget)</div><div class="card-value">${f(totExt)}</div></div>
+    <div class="card"><div class="card-label">Total to Vendors (incl. ship)</div><div class="card-value">${f(totTotal)}</div></div>
+    <div class="card"><div class="card-label">HI Commission Budget</div><div class="card-value gold">${f(totComm)}</div></div>
+    <div class="card"><div class="card-label">Paid to Date</div><div class="card-value green">${f(totPaid)}</div></div>
+    <div class="card"><div class="card-label">Balance Due</div><div class="card-value red">${f(totTotal-totPaid)}</div></div>`;
+}
+
+// ── BUDGET TAB ──
+function buildBudget(){
+  const body=document.getElementById('tb-budget');
+  const vg=vendorGroups();
+  let gtExt=0,gtShip=0,gtTotal=0,gtPaid=0,gtComm=0;
+
+  vg.forEach((rows,vendor)=>{
+    let ext=0,ship=0,paid=0;
+    rows.forEach(r=>{const c=calcRow(r);ext+=c.ext;ship+=c.ship;paid+=r.paid;});
+    const total=ext+ship;
+    const comm=ext*R.commission_rate;
+    const variance=paid-total;
+    gtExt+=ext;gtShip+=ship;gtTotal+=total;gtPaid+=paid;gtComm+=comm;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:600">${vendor}</td>
+      <td class="r">${f(ext)}</td><td class="r">${f(ship)}</td>
+      <td class="r" style="font-weight:600">${f(total)}</td>
+      <td class="r" style="color:var(--sage)">${f(paid)}</td>
+      <td class="r ${variance<0?'over':'under'}">${f(Math.abs(variance))} ${variance<0?'over':'remaining'}</td>
+      <td class="r">${pct(paid,total)}</td>
+      <td class="r" style="color:var(--gold)">${f(comm)}</td>`;
+    body.appendChild(tr);
+  });
+
+  const g=document.createElement('tr');
+  g.className='grand';
+  g.innerHTML=`
+    <td>TOTAL</td>
+    <td class="r">${f(gtExt)}</td><td class="r">${f(gtShip)}</td>
+    <td class="r">${f(gtTotal)}</td>
+    <td class="r">${f(gtPaid)}</td>
+    <td class="r">${f(gtTotal-gtPaid)} remaining</td>
+    <td class="r">${pct(gtPaid,gtTotal)}</td>
+    <td class="r" style="color:var(--gold)">${f(gtComm)}</td>`;
+  body.appendChild(g);
+
+  document.getElementById('cards-budget').innerHTML=`
+    <div class="card"><div class="card-label">Budget Subtotal</div><div class="card-value">$1,244,470.10</div></div>
+    <div class="card"><div class="card-label">Total incl. Shipping</div><div class="card-value">${f(gtTotal)}</div></div>
+    <div class="card"><div class="card-label">Paid to Date</div><div class="card-value green">${f(gtPaid)}</div></div>
+    <div class="card"><div class="card-label">Remaining</div><div class="card-value red">${f(gtTotal-gtPaid)}</div></div>
+    <div class="card"><div class="card-label">HI Commission Budget</div><div class="card-value gold">${f(gtComm)}</div></div>
+    <div class="card"><div class="card-label">Storage + Install (Withers)</div><div class="card-value">$75,000.00</div></div>`;
+}
+
+// ── COMMISSION TAB ──
+function buildComm(){
+  const body=document.getElementById('tb-comm');
+  const vg=vendorGroups();
+  let gtComm=0,gtPaid=0;
+
+  vg.forEach((rows,vendor)=>{
+    const comm=rows.reduce((a,r)=>a+calcRow(r).comm,0);
+    const paid=rows.filter(r=>r.commPaid).reduce((a,r)=>a+calcRow(r).comm,0);
+    const remaining=comm-paid;
+    if(comm===0)return;
+    gtComm+=comm;gtPaid+=paid;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:600">${vendor}</td>
+      <td class="r">${f(rows.reduce((a,r)=>a+calcRow(r).ext,0))}</td>
+      <td class="r" style="color:var(--gold);font-weight:600">${f(comm)}</td>
+      <td><span class="badge ${paid>=comm?'b-y':'b-n'}">${paid>=comm?'Yes — Transferred':'Pending'}</span></td>
+      <td class="r" style="color:${remaining>0?'var(--red)':'var(--sage)'};font-weight:600">${f(remaining)}</td>
+      <td style="font-size:.7rem;color:var(--text2)"></td>`;
+    body.appendChild(tr);
+  });
+
+  const g=document.createElement('tr');
+  g.className='grand';
+  g.innerHTML=`
+    <td>TOTAL</td><td class="r">—</td>
+    <td class="r" style="color:var(--gold)">${f(gtComm)}</td>
+    <td></td>
+    <td class="r">${f(gtComm-gtPaid)}</td><td></td>`;
+  body.appendChild(g);
+
+  document.getElementById('cards-comm').innerHTML=`
+    <div class="card"><div class="card-label">Total Commission Budget</div><div class="card-value gold">${f(gtComm)}</div></div>
+    <div class="card"><div class="card-label">Transferred to Operating</div><div class="card-value green">${f(gtPaid)}</div></div>
+    <div class="card"><div class="card-label">Pending Transfer</div><div class="card-value red">${f(gtComm-gtPaid)}</div></div>`;
+}
+
+// ── PROJECT SUMMARY TAB ──
+function buildSummary(){
+  const body=document.getElementById('tb-summary');
+  const subtotal=1244470.10;
+  const shipping=124447.01;
+  const blondiesCredit=-24528.00;
+  const commission=124447.01;
+  const storage=75000.00;
+  const tuuci=7500.00;
+  const preTax=1551336.12;
+  const tax=108068.53;
+  const grand=1659404.65;
+
+  const rows=[
+    ['Subtotal (all vendors)',subtotal,'Per DesignSpec internal budget'],
+    ['Shipping (10%)',shipping,'Applied to all vendors except Blondie\'s'],
+    ['Remove: Blondie\'s Shipping Credit',blondiesCredit,'Cost is inclusive — credit backs it out'],
+    ['HI Procurement Commission (10%)',commission,'10% of subtotal — earned on each payment'],
+    ['Storage & Installation (Withers Worldwide)',storage,'Fixed fee'],
+    ['Tuuci PE Drawings Cabana',tuuci,'Separate line — in Tuuci vendor section'],
+    ['Pre-Tax Total',preTax,''],
+    ['Sales Tax (7.00%)',tax,'On taxable amount'],
+    ['GRAND TOTAL',grand,''],
+  ];
+  rows.forEach(([label,val,note],i)=>{
+    const isGrand=i===rows.length-1;
+    const isSubtot=i===rows.length-3;
+    const tr=document.createElement('tr');
+    if(isGrand)tr.className='grand';
+    else if(isSubtot)tr.className='sub';
+    tr.innerHTML=`
+      <td style="${isGrand?'font-weight:700':''}">${label}</td>
+      <td class="r" style="font-weight:600;color:${val<0?'var(--red)':isGrand?'var(--gold)':'var(--navy)'}">${val<0?'('+f(Math.abs(val))+')':f(val)}</td>
+      <td style="font-size:.75rem;color:var(--text2)">${note}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+buildTracker();
+buildBudget();
+buildComm();
+buildSummary();
+</script>
+</body>
+</html>
